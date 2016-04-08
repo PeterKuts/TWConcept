@@ -7,45 +7,47 @@ using System;
 public class Player : MonoBehaviour {
 
 	[SerializeField]
-	private Rigidbody2D rigidBody;
+	private PlayerInput playerInput;
 	[SerializeField]
 	private ObservableFixedUpdateTrigger fixedUpdateTrigger;
 
 	void Start () {
-		var inputTrigger = Holder.SharedHolder.InputTrigger;
-		inputTrigger.Mouse
-			.Where(_ => {return isActiveAndEnabled;})
-			.Buffer(fixedUpdateTrigger.FixedUpdateAsObservable())
-			.SelectMany(list => list)
-			.Subscribe(md => ActionForMouseState(md.state)(md.position));
+		playerInput.Pointers
+			.SelectMany(t => t
+				.Buffer(fixedUpdateTrigger.FixedUpdateAsObservable())
+				.SelectMany(l => l))
+			.Subscribe(PoitnerOnNext);
 	}
 
-	Action<Vector3> ActionForMouseState(MouseState st) {
-		switch (st) {
-		case MouseState.Down: 
-			return MouseDown;
-		case MouseState.Hold: 
-			return MouseHold;
-		case MouseState.Up: 
-			return MouseUp;
+	void PoitnerOnNext(Pointer p) {
+		switch (p.phase) {
+		case PointerPhase.Began:
+			PointerBegan(p);
+			return;
+		case PointerPhase.Moved:
+			PointerMoved(p);
+			return;
+		case PointerPhase.Ended: 
+			PointerEnded(p);
+			return;
+		case PointerPhase.Canceled: 
+			PointerCanceled(p);
+			return;
 		}
-		return _ => {};
 	}
 
-	void MouseDataApply(MouseData md) {
-		rigidBody.AddForce(((Vector2)Camera.main.ScreenToWorldPoint(md.position) - rigidBody.position).normalized * 2.0f, ForceMode2D.Impulse);
+	void PointerBegan(Pointer p) {
+		Debug.Log ("Began " + p.id);
 	}
 
-	void MouseDown(Vector3 md) {
-		Debug.Log ("Down");
-		//GetComponent<SpriteRenderer> ().color = Color.green;
+	void PointerMoved(Pointer p) {
 	}
 
-	void MouseHold(Vector3 md) {
+	void PointerEnded(Pointer p) {
+		Debug.Log ("Ended " + p.id);
 	}
 
-	void MouseUp(Vector3 md) {
-		Debug.Log ("Up");
-		//GetComponent<SpriteRenderer> ().color = Color.white;
+	void PointerCanceled(Pointer p) {
+		Debug.Log ("Canceled " + p.id);
 	}
 }

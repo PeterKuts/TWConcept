@@ -3,11 +3,6 @@ using System.Collections;
 
 public class Holder : MonoBehaviour {
 
-	[SerializeField]
-	private InputTrigger inputTrigger;
-	public IInputTrigger InputTrigger {get {return inputTrigger;}}
-
-
 	private static Holder sharedHolder;
 	public static Holder SharedHolder {get {return sharedHolder;}}
 
