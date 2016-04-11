@@ -8,6 +8,7 @@ using System;
 public class Player : MonoBehaviour {
 
 	private IPointerInput pointerInput { get { return Holder.SharedHolder.PointerInput;}}
+	private IKeyInput keyInput { get { return Holder.SharedHolder.KeyInput;}}
 
 	[SerializeField]
 	private Rigidbody2D body;
@@ -22,7 +23,7 @@ public class Player : MonoBehaviour {
 	CompositeDisposable disposables = new CompositeDisposable();
 
 	void Start () {
-		pointerInput.PointersAsObservable
+		pointerInput.PointersObservable
 			.SelectMany(t => t
 				.Buffer(this.FixedUpdateAsObservable ())
 				.SelectMany(l => l))
@@ -35,16 +36,16 @@ public class Player : MonoBehaviour {
 
 	void PoitnerOnNext(Pointer p) {
 		switch (p.phase) {
-		case PointerPhase.Began:
+		case InputPhase.Began:
 			PointerBegan(p);
 			return;
-		case PointerPhase.Moved:
+		case InputPhase.Hold:
 			PointerMoved(p);
 			return;
-		case PointerPhase.Ended: 
+		case InputPhase.Ended: 
 			PointerEnded(p);
 			return;
-		case PointerPhase.Canceled: 
+		case InputPhase.Canceled: 
 			PointerCanceled(p);
 			return;
 		}
@@ -55,19 +56,19 @@ public class Player : MonoBehaviour {
 		var hook = (Rigidbody2D)GameObject.Instantiate (hookPrefab, body.position, Quaternion.identity);
 		hook.transform.SetParent (Transform);
 		hook.velocity = (pos - body.position).normalized * 5.0f;
-		activeHooks [p.id] = hook;
+		activeHooks [p.key] = hook;
 	}
 
 	void PointerMoved(Pointer p) {
 	}
 
 	void PointerEnded(Pointer p) {
-		GameObject.Destroy (activeHooks [p.id].gameObject);
-		activeHooks.Remove (p.id);
+		GameObject.Destroy (activeHooks [p.key].gameObject);
+		activeHooks.Remove (p.key);
 	}
 
 	void PointerCanceled(Pointer p) {
-		GameObject.Destroy (activeHooks [p.id].gameObject);
-		activeHooks.Remove (p.id);
+		GameObject.Destroy (activeHooks [p.key].gameObject);
+		activeHooks.Remove (p.key);
 	}
 }

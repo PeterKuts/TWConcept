@@ -5,108 +5,55 @@ using System.Collections.Generic;
 using UniRx;
 using UniRx.Triggers;
 
+public class Pointer: InputEntity<int> {
+	public readonly Vector3 position;
+	public Pointer(int key, InputPhase phase, Vector3 position): base(key, phase) {
+		this.position = position;
+	}
+
+	public static Pointer Canceled(int key) {
+		return new Pointer (key, InputPhase.Canceled, Vector3.zero);
+	}
+}
+
 public interface IPointerInput {
-	IObservable<IObservable<Pointer>> PointersAsObservable { get;}
+	IObservable<IObservable<Pointer>> PointersObservable { get;}
 }
 
 public class PointerInputTrigger : ObservableTriggerBase, IPointerInput {
 
-	private Subject<IObservable<Pointer>> pointerSubjs;
-	private Dictionary<int, Subject<Pointer>> activePointerSubjs = new Dictionary<int, Subject<Pointer>>();
-	private Func<IEnumerable<Pointer>> GetPointers;
+	private InputTrigger<int, Pointer> pointerTrigger;
+	public IObservable<IObservable<Pointer>> PointersObservable  {get {return pointerTrigger.InputObservables;}}
 
-	public IObservable<IObservable<Pointer>> PointersAsObservable  {get {return FuncExt.CacheProperty (ref pointerSubjs);}}
-
-	void Start() {
+	static Func<IEnumerable<Pointer>> PointerInjection() {
 		if (Input.touchSupported) {
-			GetPointers = InputExt.TouchesPointers;
+			return InputExt.TouchesPointers;
 		} else if (Input.mousePresent) {
-			GetPointers = InputExt.MousePointers;
-		} else {
-			GetPointers = Enumerable.Empty<Pointer>;
+			return InputExt.MousePointers;
 		}
+		return null;
+	}
+
+	void Awake() {
+		pointerTrigger = new InputTrigger<int, Pointer> (PointerInjection (), Pointer.Canceled);
 	}
 
 	void OnApplicationFocus(bool focus) {
 		if (!focus) {
-			CancelAllPointers ();
+			pointerTrigger.CancelAllInput();
 		}
 	}
 
 	void OnDisable() {
-		CancelAllPointers ();
+		pointerTrigger.CancelAllInput();
 	}
 
 	protected override void RaiseOnCompletedOnDestroy() {
-		CancelDestroyAllPointers();
+		pointerTrigger.CancelDestroyAllInput();
 	}
 
 	void Update() {
-		if (pointerSubjs == null) {
-			return;
-		}
-		if (!pointerSubjs.HasObservers) {
-			CancelDestroyAllPointers ();
-			return;
-		}
-		foreach (var p in GetPointers()) {
-			OnPointer (p);
-		}
-	}
-
-	void OnPointer(Pointer p) {
-		switch (p.phase) {
-		case PointerPhase.Began: 
-			OnPointerBegan (p); return;
-		case PointerPhase.Moved: 
-			OnPointerMoved (p); return;
-		case PointerPhase.Canceled:
-		case PointerPhase.Ended: 
-			OnPointerEndedOrCanceled (p); return;
-		}
-	}
-
-	void OnPointerBegan(Pointer p) {
-		Subject<Pointer> subj;
-		if (activePointerSubjs.TryGetValue (p.id, out subj)) {
-			subj.OnNext (Pointer.Canceled(p.id));
-			subj.OnCompleted ();
-		}
-		subj = new Subject<Pointer> ();
-		activePointerSubjs [p.id] = subj;
-		pointerSubjs.OnNext (subj);
-		subj.OnNext (p);
-	}
-
-	void OnPointerMoved(Pointer p) {
-		Subject<Pointer> subj;
-		if (!activePointerSubjs.TryGetValue (p.id, out subj)) {
-			return;
-		}
-		subj.OnNext (p);
-	}
-
-	void OnPointerEndedOrCanceled(Pointer p) {
-		Subject<Pointer> subj;
-		if (!activePointerSubjs.TryGetValue (p.id, out subj)) {
-			return;
-		}
-		subj.OnNext (p);
-		subj.OnCompleted ();
-		activePointerSubjs.Remove (p.id);
-	}
-
-	void CancelDestroyAllPointers() {
-		CancelAllPointers ();
-		SubjectExt.CallCompleteDestroy (ref pointerSubjs);
-	}
-
-	void CancelAllPointers() {
-		foreach (var p in activePointerSubjs) {
-			p.Value.OnNext (Pointer.Canceled(p.Key));
-			p.Value.OnCompleted ();
-		}
-		activePointerSubjs.Clear ();
+		pointerTrigger.Update ();
 	}
 
 }
