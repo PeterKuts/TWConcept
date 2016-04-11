@@ -55,7 +55,15 @@ public class Player : MonoBehaviour {
 		var pos = (Vector2)Camera.main.ScreenToWorldPoint (p.position);
 		var hook = (Rigidbody2D)GameObject.Instantiate (hookPrefab, body.position, Quaternion.identity);
 		hook.transform.SetParent (Transform);
-		hook.velocity = (pos - body.position).normalized * 5.0f;
+		hook.velocity = (pos - body.position).normalized * 10.0f;
+		hook.OnTriggerEnter2DAsObservable ().Subscribe (c => {
+			if (c == body.GetComponent<Collider2D>()) {
+				Debug.Log("Skip");
+			} else {
+				hook.velocity = Vector2.zero;
+				Debug.Log("Collide");
+			}
+		});
 		activeHooks [p.key] = hook;
 	}
 
