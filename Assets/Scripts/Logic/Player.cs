@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using UniRx;
 using UniRx.Triggers;
@@ -10,6 +11,15 @@ public class Player : MonoBehaviour {
 	private PlayerInput playerInput;
 	[SerializeField]
 	private ObservableFixedUpdateTrigger fixedUpdateTrigger;
+	[SerializeField]
+	private Rigidbody2D body;
+	[SerializeField]
+	private Rigidbody2D hookPrefab;
+
+	private Dictionary <int, Rigidbody2D> activeHooks = new Dictionary<int, Rigidbody2D>();
+
+	private Transform _transform;
+	public Transform Transform {get {return this.CacheComponent (ref _transform);}}
 
 	void Start () {
 		playerInput.Pointers
@@ -37,17 +47,23 @@ public class Player : MonoBehaviour {
 	}
 
 	void PointerBegan(Pointer p) {
-		Debug.Log ("Began " + p.id);
+		var pos = (Vector2)Camera.main.ScreenToWorldPoint (p.position);
+		var hook = (Rigidbody2D)GameObject.Instantiate (hookPrefab, body.position, Quaternion.identity);
+		hook.transform.SetParent (Transform);
+		hook.velocity = (pos - body.position).normalized * 5.0f;
+		activeHooks [p.id] = hook;
 	}
 
 	void PointerMoved(Pointer p) {
 	}
 
 	void PointerEnded(Pointer p) {
-		Debug.Log ("Ended " + p.id);
+		GameObject.Destroy (activeHooks [p.id].gameObject);
+		activeHooks.Remove (p.id);
 	}
 
 	void PointerCanceled(Pointer p) {
-		Debug.Log ("Canceled " + p.id);
+		GameObject.Destroy (activeHooks [p.id].gameObject);
+		activeHooks.Remove (p.id);
 	}
 }

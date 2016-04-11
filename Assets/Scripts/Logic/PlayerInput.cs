@@ -14,16 +14,16 @@ public enum PointerPhase {
 
 public class Pointer {
 	public readonly int id;
-	public readonly Vector2 position;
+	public readonly Vector3 position;
 	public readonly PointerPhase phase;
-	public Pointer(int id, Vector2 position, PointerPhase phase) {
+	public Pointer(int id, Vector3 position, PointerPhase phase) {
 		this.id = id;
 		this.position = position;
 		this.phase = phase;
 	}
 
 	public static Pointer Canceled(int id) {
-		return new Pointer (id, Vector2.zero, PointerPhase.Canceled);
+		return new Pointer (id, Vector3.zero, PointerPhase.Canceled);
 	}
 }
 
@@ -129,16 +129,15 @@ public class PlayerInput : ObservableTriggerBase {
 	}
 
 	static IEnumerable<Pointer> PointersFromMouse() {
-		Vector2 mousePosition = Input.mousePosition;
 		for (int mouseButton = (int)MouseButtons.Start; mouseButton < (int)MouseButtons.Count; ++mouseButton) {
 			if (Input.GetMouseButtonDown (mouseButton)) {
-				yield return new Pointer (mouseButton, mousePosition, PointerPhase.Began);
+				yield return new Pointer (mouseButton, Input.mousePosition, PointerPhase.Began);
 			}
 			if (Input.GetMouseButton (mouseButton)) {
-				yield return new Pointer (mouseButton, mousePosition, PointerPhase.Moved);
+				yield return new Pointer (mouseButton, Input.mousePosition, PointerPhase.Moved);
 			}
 			if (Input.GetMouseButtonUp (mouseButton)) {
-				yield return new Pointer (mouseButton, mousePosition, PointerPhase.Ended);
+				yield return new Pointer (mouseButton, Input.mousePosition, PointerPhase.Ended);
 			}
 		}
 	}
