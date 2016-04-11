@@ -10,8 +10,6 @@ public class Player : MonoBehaviour {
 	[SerializeField]
 	private PlayerInput playerInput;
 	[SerializeField]
-	private ObservableFixedUpdateTrigger fixedUpdateTrigger;
-	[SerializeField]
 	private Rigidbody2D body;
 	[SerializeField]
 	private Rigidbody2D hookPrefab;
@@ -26,7 +24,7 @@ public class Player : MonoBehaviour {
 	void Start () {
 		playerInput.Pointers
 			.SelectMany(t => t
-				.Buffer(fixedUpdateTrigger.FixedUpdateAsObservable())
+				.Buffer(this.FixedUpdateAsObservable ())
 				.SelectMany(l => l))
 			.Subscribe(PoitnerOnNext).AddTo(disposables);
 	}
