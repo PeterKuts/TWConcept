@@ -7,8 +7,8 @@ using System;
 
 public class Player : MonoBehaviour {
 
-	[SerializeField]
-	private PlayerInput playerInput;
+	private IPointerInput pointerInput { get { return Holder.SharedHolder.PointerInput;}}
+
 	[SerializeField]
 	private Rigidbody2D body;
 	[SerializeField]
@@ -22,7 +22,7 @@ public class Player : MonoBehaviour {
 	CompositeDisposable disposables = new CompositeDisposable();
 
 	void Start () {
-		playerInput.Pointers
+		pointerInput.PointersAsObservable
 			.SelectMany(t => t
 				.Buffer(this.FixedUpdateAsObservable ())
 				.SelectMany(l => l))
