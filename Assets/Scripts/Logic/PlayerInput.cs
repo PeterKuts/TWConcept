@@ -29,7 +29,7 @@ public class Pointer {
 
 public class PlayerInput : ObservableTriggerBase {
 
-	public IObservable<IObservable<Pointer>> Pointers {get {return FuncExt.CacheProperty(ref pointerSubjs);}}
+	public Subject<IObservable<Pointer>> Pointers {get {return FuncExt.CacheProperty(ref pointerSubjs);}}
 
 	private Subject<IObservable<Pointer>> pointerSubjs;
 	private Dictionary<int, Subject<Pointer>> activePointerSubjs = new Dictionary<int, Subject<Pointer>>();
@@ -46,7 +46,15 @@ public class PlayerInput : ObservableTriggerBase {
 	}
 
 	void Update() {
+		UpdatePointers ();
+	}
+
+	void UpdatePointers() {
 		if (pointerSubjs == null) {
+			return;
+		}
+		if (!pointerSubjs.HasObservers) {
+			SubjectExt.CallCompleteDestroy (ref pointerSubjs);
 			return;
 		}
 		foreach (var p in GetPointers()) {
@@ -163,9 +171,6 @@ public class PlayerInput : ObservableTriggerBase {
 	protected override void RaiseOnCompletedOnDestroy()
 	{
 		CancelAllPointers ();
-		if (pointerSubjs != null) {
-			pointerSubjs.OnCompleted ();
-			pointerSubjs = null;
-		}
+		SubjectExt.CallCompleteDestroy (ref pointerSubjs);
 	}
 }

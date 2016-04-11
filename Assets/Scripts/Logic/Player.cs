@@ -21,12 +21,18 @@ public class Player : MonoBehaviour {
 	private Transform _transform;
 	public Transform Transform {get {return this.CacheComponent (ref _transform);}}
 
+	CompositeDisposable disposables = new CompositeDisposable();
+
 	void Start () {
 		playerInput.Pointers
 			.SelectMany(t => t
 				.Buffer(fixedUpdateTrigger.FixedUpdateAsObservable())
 				.SelectMany(l => l))
-			.Subscribe(PoitnerOnNext);
+			.Subscribe(PoitnerOnNext).AddTo(disposables);
+	}
+
+	void OnDestroy() {
+		disposables.Dispose ();
 	}
 
 	void PoitnerOnNext(Pointer p) {

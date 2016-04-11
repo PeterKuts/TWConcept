@@ -17,19 +17,14 @@ public static class FuncExt {
 		return t;
 	}
 
-	public static void CallNext<T>(Subject<T> subject, Func<T> func) {
-		if (subject == null) { return;}
-		subject.OnNext (func ());
+	public static void OptionalCall<T>(T obj, Action<T> action) {
+		if (obj == null || action == null) { return;}
+		action (obj);
 	}
 
-	public static void CallNext<T>(Subject<T> subject, Func<bool> predicate, Func<T> func) {
-		if (subject == null || predicate() == false) { return;}
-		subject.OnNext (func ());
-	}
-
-	public static void CallComplete<T>(Subject<T> subject) {
-		if (subject == null) { return;}
-		subject.OnCompleted ();
+	public static void OptionalIfCall<T>(T obj, Func<T, bool> predicate, Action<T> action) {
+		if (obj == null || action == null || predicate == null || !predicate(obj)) { return; } 
+		action (obj);
 	}
 
 }
