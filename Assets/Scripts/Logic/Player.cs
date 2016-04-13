@@ -5,20 +5,22 @@ using UniRx;
 using UniRx.Triggers;
 using System;
 
-public class Player : MonoBehaviour {
+public class Player: MonoBehaviour {
 
 	private IPointerInput pointerInput { get { return Holder.SharedHolder.PointerInput;}}
 	private IKeyInput keyInput { get { return Holder.SharedHolder.KeyInput;}}
 
 	[SerializeField]
-	private Rigidbody2D body;
-	[SerializeField]
-	private Rigidbody2D hookPrefab;
-
-	private Dictionary <int, Rigidbody2D> activeHooks = new Dictionary<int, Rigidbody2D>();
-
 	private Transform _transform;
-	public Transform Transform {get {return this.CacheComponent (ref _transform);}}
+	public Transform Transform {get { return this.CacheComponent<Transform>(ref _transform); }}
+
+	[SerializeField]
+	private Body body;
+	[SerializeField]
+	private Hook hookPrefab;
+
+
+	private Dictionary <int, Hook> activeHooks = new Dictionary<int, Hook>();
 
 	CompositeDisposable disposables = new CompositeDisposable();
 
@@ -51,20 +53,18 @@ public class Player : MonoBehaviour {
 		}
 	}
 
+	static Hook InstantiateHook(Hook prefab, Body body, Transform parent) {
+		var hook = (Hook)GameObject.Instantiate (prefab, body.Transform.position, Quaternion.identity);
+		Physics2D.IgnoreCollision (hook.Collider, body.Collider, true);
+		hook.Transform.SetParent (parent);
+		return hook;
+	}
+
 	void PointerBegan(Pointer p) {
 		var pos = (Vector2)Camera.main.ScreenToWorldPoint (p.position);
-		var hook = (Rigidbody2D)GameObject.Instantiate (hookPrefab, body.position, Quaternion.identity);
-		hook.transform.SetParent (Transform);
-		hook.velocity = (pos - body.position).normalized * 10.0f;
-		hook.OnTriggerEnter2DAsObservable ().Subscribe (c => {
-			if (c == body.GetComponent<Collider2D>()) {
-				Debug.Log("Skip");
-			} else {
-				hook.velocity = Vector2.zero;
-				Debug.Log("Collide");
-			}
-		});
+		var hook = InstantiateHook(hookPrefab, body, Transform);
 		activeHooks [p.key] = hook;
+		hook.Rigidbody.velocity = (pos - body.Rigidbody.position).normalized * 100.0f;
 	}
 
 	void PointerMoved(Pointer p) {
