@@ -28,7 +28,7 @@ public class Player: MonoBehaviour {
 	void CreateHook(IObservable<Pointer> pointers) {
 		var hook = (Hook)GameObject.Instantiate (hookPrefab, body.Transform.position, Quaternion.identity);
 		hook.Transform.SetParent (Transform);
-		hook.Init (pointers, this.FixedUpdateAsObservable ());
+		hook.Init (pointers, this.FixedUpdateAsObservable (), body);
 	}
 
 	void OnDestroy() {
